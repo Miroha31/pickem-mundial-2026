@@ -469,6 +469,55 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <script>
 const STORAGE = 'mj_pickem_mundial26_v1';
 const ADMIN_PASS = 'mijugada2026';
+const SB_URL = 'https://rxaxvzzajuvgbijpftiz.supabase.co';
+const SB_KEY = 'sb_publishable_Q7608TbXM-5MDFLkLCCpwA_OAWjrI4A';
+
+async function sbInsert(entry) {
+  const res = await fetch(SB_URL+'/rest/v1/boletas', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer '+SB_KEY,
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({
+      id: entry.id,
+      nombre: entry.nombre,
+      cel: entry.cel,
+      email: entry.email,
+      ciudad: entry.ciudad,
+      picks: entry.picks,
+      goleador: entry.goleador,
+      goleador_name: entry.goleadorName,
+      status: entry.status
+    })
+  });
+  return res.ok;
+}
+
+async function sbFetch() {
+  const res = await fetch(SB_URL+'/rest/v1/boletas?select=*&order=created_at.desc', {
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer '+SB_KEY
+    }
+  });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.map(r => ({
+    id: r.id,
+    ts: new Date(r.created_at).getTime(),
+    nombre: r.nombre,
+    cel: r.cel,
+    email: r.email,
+    ciudad: r.ciudad,
+    picks: r.picks,
+    goleador: r.goleador,
+    goleadorName: r.goleador_name,
+    status: r.status
+  }));
+}
 
 // ── DATA ─────────────────────────────────────
 const GROUPS = [
@@ -644,6 +693,10 @@ function handleSubmit() {
   state.participants.push(entry);
   save();
   state.lastEntry = entry;
+  // Send to Supabase
+  sbInsert(entry).then(ok => {
+    if (!ok) console.warn('Supabase insert failed — saved locally only');
+  });
   renderConfirm();
   nav('page-confirm');
 }
@@ -674,12 +727,19 @@ function softReset() {
 function checkAdmin() {
   if (document.getElementById('adm-pass').value === ADMIN_PASS) {
     state.adminAuth = true;
-    renderAdmin();
-    nav('page-admin');
+    renderAdmin().then(() => nav('page-admin'));
   } else { toast('Contraseña incorrecta'); }
 }
 
-function renderAdmin() {
+async function renderAdmin() {
+  toast('Cargando boletas…');
+  try {
+    const remote = await sbFetch();
+    if (remote.length > 0) {
+      state.participants = remote;
+      save();
+    }
+  } catch(e) { console.warn('Supabase fetch failed, using local data'); }
   const p = state.participants;
   const cities = new Set(p.map(x=>x.ciudad));
   const complete = p.filter(x=>x.status==='completo').length;
