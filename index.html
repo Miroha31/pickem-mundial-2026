@@ -297,11 +297,8 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     <div class="eyebrow" style="justify-content:flex-start;margin-bottom:10px">Paso 1 de 2</div>
     <div class="form-heading">TUS DATOS</div>
     <div class="form-sub">Necesitamos cómo contactarte si ganas. Gratis, sin spam.</div>
-    <div class="fgroup"><label>Nombre completo</label><input type="text" id="r-nombre" placeholder="Como aparece en tu INE" autocomplete="name"></div>
-    <div class="frow">
-      <div class="fgroup"><label>Celular</label><input type="tel" id="r-cel" placeholder="+52 81 0000 0000" inputmode="tel"></div>
-      <div class="fgroup"><label>Correo</label><input type="email" id="r-email" placeholder="tu@correo.com" inputmode="email"></div>
-    </div>
+    <div class="fgroup"><label>Nombre o apodo</label><input type="text" id="r-nombre" placeholder="¿Cómo te llaman?" autocomplete="nickname"></div>
+<div class="fgroup"><label>WhatsApp</label><input type="tel" id="r-cel" placeholder="+52 81 0000 0000" inputmode="tel"></div>
     <div class="fgroup">
       <label>Ciudad</label>
       <select id="r-ciudad">
@@ -311,7 +308,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
         <option>Puebla</option><option>Querétaro</option><option>Saltillo</option><option>Otra</option>
       </select>
     </div>
-    <div class="legal-box">Al registrarte autorizas a MiJugada Fantasy a usar tu nombre, celular y correo para administrar el concurso y enviarte comunicaciones sobre la plataforma. La participación implica la aceptación de estos términos. Solo mayores de 18 años residentes en México.</div>
+    <div class="legal-box">Al registrarte autorizas a MiJugada Fantasy a usar tu nombre y WhatsApp para administrar el concurso y contactarte si ganas. La participación implica la aceptación de estos términos. Solo mayores de 18 años residentes en México.</div>
     <button class="btn-primary" onclick="handleRegister()">Continuar a mis picks →</button>
     <div style="margin-top:10px"><button class="btn-ghost" onclick="nav('page-landing')">← Cancelar</button></div>
   </div>
@@ -456,7 +453,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
       <div style="overflow-x:auto">
         <table class="data-tbl">
           <thead><tr>
-            <th>#</th><th>Nombre</th><th>Celular</th><th>Correo</th><th>Ciudad</th>
+            <th>#</th><th>Nombre</th><th>WhatsApp</th><th>Ciudad</th>
             <th>Goleador</th><th>Registro</th><th>Status</th>
           </tr></thead>
           <tbody id="adm-tbody"></tbody>
@@ -588,10 +585,9 @@ function handleRegister() {
   const e = document.getElementById('r-email').value.trim();
   const ci = document.getElementById('r-ciudad').value;
   if (!n || n.length < 2) { toast('Ingresa tu nombre completo'); return; }
-  if (!/[\d]{8,}/.test(c.replace(/\D/g,''))) { toast('Ingresa un celular válido'); return; }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) { toast('Ingresa un correo válido'); return; }
+  if (!/[\d]{8,}/.test(c.replace(/\D/g,''))) { toast('Ingresa un WhatsApp válido'); return; }
   if (!ci) { toast('Selecciona tu ciudad'); return; }
-  state.form = {nombre:n, cel:c, email:e, ciudad:ci};
+  state.form = {nombre:n, cel:c, email:'', ciudad:ci};
   renderGroups(); renderPlayers(); updateProgress();
   nav('page-picks');
 }
@@ -709,6 +705,7 @@ function renderConfirm() {
   document.getElementById('confirm-card').innerHTML = `
     <div class="ec-row"><span class="ek">Boleta</span><span class="ev gold">${e.id}</span></div>
     <div class="ec-row"><span class="ek">Participante</span><span class="ev">${e.nombre}</span></div>
+    <div class="ec-row"><span class="ek">WhatsApp</span><span class="ev">${e.cel}</span></div>
     <div class="ec-row"><span class="ek">Ciudad</span><span class="ev">${e.ciudad}</span></div>
     <div class="ec-row"><span class="ek">Grupos elegidos</span><span class="ev">12 / 12</span></div>
     <div class="ec-row"><span class="ek">Goleador</span><span class="ev">${e.goleadorName}</span></div>
@@ -778,7 +775,6 @@ async function renderAdmin() {
       <td><span class="badge badge-dim">${p.length-i}</span></td>
       <td style="color:var(--white);font-weight:500">${x.nombre}<br><span style="font-size:10px;color:var(--text);font-family:'DM Mono',monospace">${x.id}</span></td>
       <td>${x.cel}</td>
-      <td style="color:var(--text)">${x.email}</td>
       <td>${x.ciudad}</td>
       <td style="color:var(--blue2)">${x.goleadorName||'—'}</td>
       <td style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text)">${ds}</td>
@@ -789,9 +785,9 @@ async function renderAdmin() {
 
 function exportCSV() {
   if (!state.participants.length) { toast('No hay boletas aún'); return; }
-  const h = ['id','timestamp','nombre','celular','email','ciudad',...GROUPS.map(g=>'grupo_'+g.id),'goleador'].join(',');
+  const h = ['id','timestamp','nombre','whatsapp','ciudad',...GROUPS.map(g=>'grupo_'+g.id),'goleador'].join(',');
   const rows = state.participants.map(x => [
-    x.id, new Date(x.ts).toISOString(), x.nombre, x.cel, x.email, x.ciudad,
+    x.id, new Date(x.ts).toISOString(), x.nombre, x.cel, x.ciudad,
     ...GROUPS.map(g => x.picks[g.id]||''), x.goleadorName||''
   ].map(f => { const s=String(f).replace(/"/g,'""'); return /[,"\n]/.test(s)?`"${s}"`:s; }).join(','));
   const blob = new Blob(['\ufeff'+[h,...rows].join('\n')],{type:'text/csv;charset=utf-8'});
