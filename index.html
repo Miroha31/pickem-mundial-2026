@@ -582,7 +582,6 @@ function toast(msg, ms=2400) {
 function handleRegister() {
   const n = document.getElementById('r-nombre').value.trim();
   const c = document.getElementById('r-cel').value.trim();
-  const e = document.getElementById('r-email').value.trim();
   const ci = document.getElementById('r-ciudad').value;
   if (!n || n.length < 2) { toast('Ingresa tu nombre completo'); return; }
   if (!/[\d]{8,}/.test(c.replace(/\D/g,''))) { toast('Ingresa un WhatsApp válido'); return; }
