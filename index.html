@@ -691,7 +691,7 @@ function renderConfirm() {
     <div class="ec-row"><span class="ek">Goleador</span><span class="ev">${e.goleadorName}</span></div>
     <div class="ec-row"><span class="ek">Registrada</span><span class="ev">${dateStr}</span></div>
   `;
-  document.getElementById('confirm-ticker').innerHTML = '';
+  const ticker = document.getElementById('confirm-ticker'); if(ticker) ticker.innerHTML = '';
 }
 
 function softReset() {
@@ -725,10 +725,7 @@ function exportCSV() {
   toast('CSV exportado · '+state.participants.length+' boletas');
 }
 
-function clearAll() {
-  if (!confirm('¿Borrar TODAS las boletas? No se puede deshacer.')) return;
-  state.participants = []; save(); renderAdmin(); toast('Boletas eliminadas');
-}
+
 
 function renderResultsInputs() {
   const saved = JSON.parse(localStorage.getItem('mj_results')||'{}');
@@ -780,38 +777,36 @@ function saveResults() {
     toast(`Guardado. Faltan ${missing} grupos por completar.`);
   } else {
     toast('Resultados guardados. Calculando ranking…');
-    setTimeout(calcRanking, 400);
+    calcRanking();
   }
 }
 
-function calcRanking() {
+async function calcRanking() {
   const results = JSON.parse(localStorage.getItem('mj_results')||'{}');
   const goles = parseInt(localStorage.getItem('mj_goles')||'0');
+  const savedGoleadorWinner = localStorage.getItem('mj_goleador_winner')||'';
+
   if (!Object.keys(results).length) { toast('Primero guarda los resultados'); return; }
 
-  const ranked = state.participants.map(p => {
+  // Load participants from Supabase
+  toast('Cargando boletas…');
+  let participants = [];
+  try {
+    participants = await sbFetch();
+  } catch(e) {
+    toast('Error conectando a Supabase'); return;
+  }
+  if (!participants.length) { toast('No hay boletas registradas'); return; }
+
+  const ranked = participants.map(p => {
     let gruposOk = 0;
     GROUPS.forEach(g => {
       if (results[g.id] && p.picks[g.id] === results[g.id]) gruposOk++;
     });
     const ptsGrupos = gruposOk * 5;
-    // goleador pts: si el goleador del participante fue el ganador real
-    // (comparamos por nombre — en producción esto se puede refinar)
-    const goleadorOk = false; // se maneja por goles directamente
-    const ptsGoleador = p.goleador ? goles * 3 : 0; // simplificado: todos los que eligieron al ganador real
-    // Nota: en producción filtrar solo quien eligió al goleador correcto
-    // Por ahora mostramos los goles * 3 para el goleador elegido
+    const ptsGoleador = (savedGoleadorWinner && p.goleador === savedGoleadorWinner) ? goles * 3 : 0;
     const total = ptsGrupos + ptsGoleador;
-    return { ...p, gruposOk, ptsGrupos, ptsGoleador: 0, total: ptsGrupos };
-  });
-
-  // More accurate: only give goleador pts to those who picked the actual winner
-  const savedGoleadorWinner = localStorage.getItem('mj_goleador_winner')||'';
-  ranked.forEach(p => {
-    if (savedGoleadorWinner && p.goleador === savedGoleadorWinner) {
-      p.ptsGoleador = goles * 3;
-      p.total = p.ptsGrupos + p.ptsGoleador;
-    }
+    return { ...p, gruposOk, ptsGrupos, ptsGoleador, total };
   });
 
   ranked.sort((a,b) => b.total - a.total || b.gruposOk - a.gruposOk);
@@ -820,7 +815,7 @@ function calcRanking() {
   wrap.style.display = 'block';
   document.getElementById('ranking-count').textContent = ranked.length + ' participantes';
   document.getElementById('ranking-tbody').innerHTML = ranked.map((p,i) => {
-    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':''
+    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
     return `<tr style="${i===0?'background:rgba(31,117,194,.1)':''}">
       <td style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:${i===0?'var(--blue2)':'var(--text)'}">${medal||i+1}</td>
       <td style="color:var(--white);font-weight:600">${p.nombre}</td>
@@ -832,6 +827,7 @@ function calcRanking() {
       <td style="text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:${i===0?'var(--blue2)':'var(--white)'}">${p.total}</td>
     </tr>`;
   }).join('');
+  toast('Ranking calculado');
 }
 
 function toggleResults() {
@@ -844,25 +840,26 @@ function toggleResults() {
   }
 }
 
-function seedDemo() {
+async function seedDemo() {
   const names = [
-    ['Carlos Treviño','+52 81 1234 5678','carlos@correo.com','Monterrey'],
-    ['Andrea Salinas','+52 81 2345 6789','andrea@correo.com','Monterrey'],
-    ['Roberto García','+52 55 3456 7890','roberto@correo.com','Ciudad de México'],
-    ['Paulina Elizondo','+52 33 4567 8901','paulina@correo.com','Guadalajara'],
-    ['Jorge Ramírez','+52 81 5678 9012','jorge@correo.com','San Pedro Garza García'],
+    ['Carlos Treviño','+52 81 1234 5678','Monterrey'],
+    ['Andrea Salinas','+52 81 2345 6789','Monterrey'],
+    ['Roberto García','+52 55 3456 7890','Ciudad de México'],
+    ['Paulina Elizondo','+52 33 4567 8901','Guadalajara'],
+    ['Jorge Ramírez','+52 81 5678 9012','San Pedro Garza García'],
   ];
-  names.forEach(d => {
+  for (const d of names) {
     const picks = {}; GROUPS.forEach(g => { picks[g.id]=g.teams[Math.floor(Math.random()*4)].c; });
     const gol = SCORERS[Math.floor(Math.random()*SCORERS.length)];
-    state.participants.push({
+    const entry = {
       id:'MJ26-'+Math.floor(Math.random()*90000+10000),
       ts:Date.now()-Math.random()*1000*60*60*24,
-      nombre:d[0],cel:d[1],email:d[2],ciudad:d[3],
+      nombre:d[0], cel:d[1], email:'', ciudad:d[2],
       picks, goleador:gol.id, goleadorName:gol.nm, status:'completo'
-    });
-  });
-  save(); renderAdmin(); toast('5 boletas demo agregadas');
+    };
+    await sbInsert(entry);
+  }
+  toast('5 boletas demo enviadas a Supabase');
 }
 </script>
 </body>
