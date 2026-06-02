@@ -725,24 +725,6 @@ function checkAdmin() {
 
 async function renderAdmin() {
   renderResultsInputs();
-  const tb = document.getElementById('adm-tbody');
-  if (!p.length) {
-    document.querySelector('.tbl-wrap').innerHTML += `<div class="admin-empty"><h3>SIN BOLETAS AÚN</h3><p>Usa el botón Demo para agregar datos de prueba.</p></div>`;
-    return;
-  }
-  tb.innerHTML = [...p].reverse().map((x,i) => {
-    const dt = new Date(x.ts);
-    const ds = dt.toLocaleDateString('es-MX',{day:'2-digit',month:'short'})+' '+dt.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
-    return `<tr>
-      <td><span class="badge badge-dim">${p.length-i}</span></td>
-      <td style="color:var(--white);font-weight:500">${x.nombre}<br><span style="font-size:10px;color:var(--text);font-family:'DM Mono',monospace">${x.id}</span></td>
-      <td>${x.cel}</td>
-      <td>${x.ciudad}</td>
-      <td style="color:var(--blue2)">${x.goleadorName||'—'}</td>
-      <td style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text)">${ds}</td>
-      <td><span class="badge badge-green">${x.status}</span></td>
-    </tr>`;
-  }).join('');
 }
 
 function exportCSV() {
