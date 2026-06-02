@@ -747,21 +747,6 @@ async function renderAdmin() {
   `;
   document.getElementById('adm-count').textContent = p.length + ' registros';
   renderResultsInputs();
-  // Add goleador winner selector
-  const gw = localStorage.getItem('mj_goleador_winner')||'';
-  const gwDiv = document.getElementById('results-inputs');
-  if (gwDiv) {
-    const extra = document.createElement('div');
-    extra.style.cssText = 'display:flex;flex-direction:column;gap:6px;grid-column:1/-1;margin-top:8px;padding-top:12px;border-top:1px solid var(--border)';
-    extra.innerHTML = `
-      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--blue2);text-transform:uppercase">Goleador ganador (ID del jugador)</div>
-      <div style="font-size:10px;color:var(--text);margin-bottom:2px">${SCORERS.map(s=>s.id+' = '+s.nm).join(' · ')}</div>
-      <input type="text" id="goleador-winner-input" placeholder="ej: mbappe" value="${gw}"
-        style="background:var(--navy);border:1px solid var(--border2);border-radius:4px;color:var(--white);font-family:'DM Mono',monospace;font-size:13px;padding:8px 10px;outline:none;width:200px"
-        onchange="localStorage.setItem('mj_goleador_winner',this.value.trim())">
-    `;
-    gwDiv.after(extra);
-  }
   const tb = document.getElementById('adm-tbody');
   if (!p.length) {
     document.querySelector('.tbl-wrap').innerHTML += `<div class="admin-empty"><h3>SIN BOLETAS AÚN</h3><p>Usa el botón Demo para agregar datos de prueba.</p></div>`;
@@ -815,6 +800,25 @@ function renderResultsInputs() {
   `).join('');
   const savedGoles = localStorage.getItem('mj_goles')||'0';
   document.getElementById('goles-input').value = savedGoles;
+  // Goleador winner — rendered once here
+  const gw = localStorage.getItem('mj_goleador_winner')||'';
+  const existingExtra = document.getElementById('goleador-winner-wrap');
+  if (!existingExtra) {
+    const extra = document.createElement('div');
+    extra.id = 'goleador-winner-wrap';
+    extra.style.cssText = 'margin-top:16px;padding-top:12px;border-top:1px solid var(--border)';
+    extra.innerHTML = `
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--blue2);text-transform:uppercase;margin-bottom:6px">Goleador ganador (ID)</div>
+      <div style="font-size:10px;color:var(--text);margin-bottom:8px">${SCORERS.map(s=>s.id+' = '+s.nm).join(' · ')}</div>
+      <input type="text" id="goleador-winner-input" placeholder="ej: mbappe" value="${gw}"
+        style="background:var(--navy);border:1px solid var(--border2);border-radius:4px;color:var(--white);font-family:'DM Mono',monospace;font-size:13px;padding:8px 10px;outline:none;width:200px"
+        onchange="localStorage.setItem('mj_goleador_winner',this.value.trim())">
+    `;
+    document.getElementById('results-panel').appendChild(extra);
+  } else {
+    const inp = document.getElementById('goleador-winner-input');
+    if (inp) inp.value = gw;
+  }
 }
 
 function saveResults() {
