@@ -375,7 +375,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     <div class="confirm-title">ESTÁS<br><em>DENTRO.</em></div>
     <div class="confirm-lead">Tus picks están registrados. Te contactaremos al finalizar la fase de grupos con tu resultado.</div>
     <div class="entry-card" id="confirm-card"></div>
-    <div class="confirm-ticker" id="confirm-ticker"></div>
+    
     <button class="btn-ghost" onclick="softReset()">← Volver al inicio</button>
   </div>
 </div>
@@ -441,22 +441,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
       </div>
     </div>
 
-    <div class="tbl-wrap">
-      <div class="tbl-head">
-        <div class="tbl-title">Boletas registradas</div>
-        <div class="tbl-count" id="adm-count">—</div>
-      </div>
-      <div style="overflow-x:auto">
-        <table class="data-tbl">
-          <thead><tr>
-            <th>#</th><th>Nombre</th><th>WhatsApp</th><th>Ciudad</th>
-            <th>Goleador</th><th>Registro</th><th>Status</th>
-          </tr></thead>
-          <tbody id="adm-tbody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+    
 </div>
 
 <script>
@@ -706,8 +691,7 @@ function renderConfirm() {
     <div class="ec-row"><span class="ek">Goleador</span><span class="ev">${e.goleadorName}</span></div>
     <div class="ec-row"><span class="ek">Registrada</span><span class="ev">${dateStr}</span></div>
   `;
-  document.getElementById('confirm-ticker').innerHTML =
-    `Eres el participante <strong>#${String(state.participants.length).padStart(3,'0')}</strong> registrado`;
+  document.getElementById('confirm-ticker').innerHTML = '';
 }
 
 function softReset() {
