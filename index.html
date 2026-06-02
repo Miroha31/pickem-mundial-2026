@@ -403,14 +403,10 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
   </header>
   <div class="admin-wrap">
     <div class="admin-toprow">
-      <div class="admin-title">PARTICIPANTES</div>
-      <div class="admin-actions">
-        <button class="btn-primary btn-sm" onclick="exportCSV()">📥 CSV</button>
-        <button class="btn-ghost btn-sm" onclick="seedDemo()">Demo</button>
-        <button class="btn-ghost btn-sm" onclick="clearAll()" style="color:var(--danger);border-color:rgba(224,85,85,.3)">Limpiar</button>
-      </div>
+      <div class="admin-title">RESULTADOS Y RANKING</div>
+<div></div>
     </div>
-    <div class="kpis" id="adm-kpis"></div>
+    
 
     <!-- RESULTADOS -->
     <div class="tbl-wrap" style="margin-bottom:16px">
@@ -728,24 +724,6 @@ function checkAdmin() {
 }
 
 async function renderAdmin() {
-  toast('Cargando boletas…');
-  try {
-    const remote = await sbFetch();
-    if (remote.length > 0) {
-      state.participants = remote;
-      save();
-    }
-  } catch(e) { console.warn('Supabase fetch failed, using local data'); }
-  const p = state.participants;
-  const cities = new Set(p.map(x=>x.ciudad));
-  const complete = p.filter(x=>x.status==='completo').length;
-  document.getElementById('adm-kpis').innerHTML = `
-    <div class="kpi"><div class="kpi-val">${p.length}</div><div class="kpi-lbl">Boletas</div></div>
-    <div class="kpi"><div class="kpi-val">${complete}</div><div class="kpi-lbl">Completas</div></div>
-    <div class="kpi"><div class="kpi-val">${cities.size}</div><div class="kpi-lbl">Ciudades</div></div>
-    <div class="kpi"><div class="kpi-val">${p.filter(x=>x.ciudad==='Monterrey'||x.ciudad==='San Pedro Garza García'||x.ciudad==='Guadalupe').length}</div><div class="kpi-lbl">Regio</div></div>
-  `;
-  document.getElementById('adm-count').textContent = p.length + ' registros';
   renderResultsInputs();
   const tb = document.getElementById('adm-tbody');
   if (!p.length) {
